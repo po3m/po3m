@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>The Echoing Moment</title>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+    #root { position: absolute; inset: 0; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="animations.jsx"></script>
+<script type="text/babel">
+
+const W = 1920, H = 1080, DURATION = 74;
+
+// ── Deterministic RNG ────────────────────────────────────────────────────────
+function mkrng(seed) {
+  let s = Math.abs((seed * 9301 + 49297) % 233280) || 1;
+  return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+}
+
+// ── Cell population ─────────────────────────────────────────────────────────
+const CELLS = (() => {
+  const arr = [];
+
+  // Healthy: warm gold-teal, innocent
+  for (let i = 0; i < 52; i++) {
+    const rng = mkrng(i * 137 + 3);
+    const isCenter = i < 4;
+    arr.push({
+      id: i, type: 'healthy',
+      x: isCenter ? W/2 + (rng()-0.5)*320 : rng()*W,
+      y: isCenter ? H/2 + (rng()-0.5)*220 : rng()*H,
+      r: (isCenter ? 40 : 20) + rng()*62,
+      phase:  rng()*Math.PI*2,
+      driftA: rng()*Math.PI*2,
+      driftS: 16 + rng()*28,
+      hueOff: rng()*48,
+      birthTime: isCenter ? 0 : 1.5 + rng()*22,
+      deathStart: 63 + rng()*9,
+    });
+  }
+
+  // Dark / death: deep violet-black, aggressive
+  for (let i = 0; i < 28; i++) {
+    const rng = mkrng((i+52)*137 + 9);
+    arr.push({
+      id: i+52, type: 'dark',
+      x: rng()*W, y: rng()*H,
+      r: 12 + rng()*42,
+      phase:  rng()*Math.PI*2,
+      driftA: rng()*Math.PI*2,
+      driftS: 38 + rng()*60,
+      hueOff: rng()*32,
+      birthTime: 19 + rng()*14,
+      deathStart: 48 + rng()*16,
+    });
+  }
+
+  return arr;
+})();
+
+// ── Draw one cell ────────────────────────────────────────────────────────────
+function drawCell(ctx, cell, t) {
+  const isDark = cell.type === 'dark';
+  const age = t - cell.birthTime;
+  if (age < 0) return;
+
+  const dyingAge = Math.max(0, t - cell.deathStart);
+  const dying    = dyingAge > 0;
+
+  const fadeIn  = Math.min(1, age / 2.4);
+  const fadeOut = dying ? Math.max(0, 1 - dyingAge / 3.0) : 1;
+  const op = fadeIn * fadeOut;
+  if (op < 0.008) return;
+
+  // Organic drift – layered sinusoids
+  const b = isDark ? Math.max(0, Math.min(1, (t-20)/10)) * 75 : 0;
+  const dx = (Math.cos(cell.driftA + t*0.068) + 0.45*Math.cos(cell.driftA*1.73 + t*0.041))*cell.driftS
+           + Math.cos(t*0.31 + cell.phase)*b;
+  const dy = (Math.sin(cell.driftA + t*0.068) + 0.45*Math.sin(cell.driftA*2.17 + t*0.052))*cell.driftS
+           + Math.sin(t*0.24 + cell.phase)*b;
+  const cx = ((cell.x + dx)%W + W)%W;
+  const cy = ((cell.y + dy)%H + H)%H;
+
+  // Size: pulse + death shrink
+  const pr   = isDark ? 1.95 : 0.62;
+  const pAmp = dying ? 0.04 : (isDark ? 0.10 : 0.15);
+  const shrink = dying ? Math.max(0.04, 1 - dyingAge*0.28) : 1;
+  const r = cell.r * (1 + Math.sin(t*pr + cell.phase)*pAmp) * shrink;
+
+  // Colour
+  const hue = isDark
+    ? 258 + cell.hueOff + Math.sin(t*0.28 + cell.phase)*12
+    :  40 + cell.hueOff + Math.sin(t*0.17 + cell.phase)*14;
+  const sat = isDark ? 50 : 64;
+  const litBase = isDark ? 18 : 56;
+  const lit = (!isDark && dying) ? Math.max(18, litBase - dyingAge*9) : litBase;
+
+  // Ambient glow
+  const gR = r * (isDark ? 2.1 : 3.0);
+  const g1 = ctx.createRadialGradient(cx, cy, r*0.15, cx, cy, gR);
+  g1.addColorStop(0, `hsla(${hue},${sat}%,${lit}%,${(isDark?0.11:0.17)*op})`);
+  g1.addColorStop(1, `hsla(${hue},${sat}%,${lit}%,0)`);
+  ctx.beginPath(); ctx.arc(cx, cy, gR, 0, Math.PI*2);
+  ctx.fillStyle = g1; ctx.fill();
+
+  // Cytoplasm
+  const g2 = ctx.createRadialGradient(cx - r*0.27, cy - r*0.22, 0, cx, cy, r);
+  g2.addColorStop(0,   `hsla(${hue+14},${sat}%,${lit+13}%,${0.21*op})`);
+  g2.addColorStop(0.6, `hsla(${hue},${sat-5}%,${lit}%,${0.12*op})`);
+  g2.addColorStop(1,   `hsla(${hue-12},${sat-15}%,${lit-18}%,${0.05*op})`);
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.fillStyle = g2; ctx.fill();
+
+  // Membrane
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.strokeStyle = `hsla(${hue+18},${sat+12}%,${lit+24}%,${(isDark?0.44:0.66)*op})`;
+  ctx.lineWidth = isDark ? 1.4 : 2.1;
+  ctx.stroke();
+
+  // Nucleus
+  if (r > 11 && (!dying || dyingAge < 1.3)) {
+    const nR   = r * 0.27;
+    const nOp  = dying ? Math.max(0, 1 - dyingAge) : 1;
+    const g3 = ctx.createRadialGradient(cx, cy, 0, cx, cy, nR);
+    g3.addColorStop(0,   `hsla(${hue+38},${sat+22}%,${lit+34}%,${0.96*op*nOp})`);
+    g3.addColorStop(0.5, `hsla(${hue+18},${sat+10}%,${lit+18}%,${0.55*op*nOp})`);
+    g3.addColorStop(1,   `hsla(${hue},${sat}%,${lit+5}%,${0.10*op*nOp})`);
+    ctx.beginPath(); ctx.arc(cx, cy, nR, 0, Math.PI*2);
+    ctx.fillStyle = g3; ctx.fill();
+  }
+
+  // Organelles (vesicles) – healthy only
+  if (!isDark && op > 0.22 && r > 18) {
+    const rng2 = mkrng(cell.id * 83);
+    const n = 3 + Math.floor(rng2()*3);
+    for (let k = 0; k < n; k++) {
+      const oA = rng2()*Math.PI*2 + t*(0.07 + rng2()*0.06);
+      const oD = (0.28 + rng2()*0.44)*r;
+      const oR = r*(0.046 + rng2()*0.034);
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(oA)*oD, cy + Math.sin(oA)*oD, oR, 0, Math.PI*2);
+      ctx.fillStyle = `hsla(${hue+28},${sat}%,${lit+19}%,${0.56*op})`;
+      ctx.fill();
+    }
+  }
+
+  // Dying debris – dark cells fragment
+  if (isDark && dying && dyingAge < 2.5) {
+    const rng3 = mkrng(cell.id * 211);
+    const n = 5;
+    for (let k = 0; k < n; k++) {
+      const da = rng3()*Math.PI*2;
+      const dd = r + dyingAge*r*1.4*rng3();
+      const dr = r*(0.06 + rng3()*0.08) * Math.max(0, 1 - dyingAge);
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(da)*dd, cy + Math.sin(da)*dd, dr, 0, Math.PI*2);
+      ctx.fillStyle = `hsla(${hue},${sat}%,${lit+10}%,${0.3*(1 - dyingAge/2.5)*op})`;
+      ctx.fill();
+    }
+  }
+}
+
+// ── Cell Canvas ──────────────────────────────────────────────────────────────
+function CellCanvas() {
+  const time = useTime();
+  const ref  = React.useRef(null);
+
+  React.useEffect(() => {
+    const cv = ref.current; if (!cv) return;
+    const ctx = cv.getContext('2d');
+
+    // Background — shifts from warm-dark → cold-purple (battle) → warm-dark (rebirth)
+    const battlePeak = Math.exp(-((time-37)**2)/90);
+    const rebirthT   = Math.max(0, Math.min(1, (time-57)/10));
+    const bgH = 20  + battlePeak*250 + rebirthT*10;
+    const bgS = 6   + battlePeak*18  + rebirthT*6;
+    const bgL = 1.5 + battlePeak*1.5 + rebirthT*3;
+    ctx.fillStyle = `hsl(${bgH},${bgS}%,${bgL}%)`;
+    ctx.fillRect(0, 0, W, H);
+
+    // Healthy cells (bottom layer)
+    for (const c of CELLS) if (c.type === 'healthy') drawCell(ctx, c, time);
+    // Dark cells on top
+    for (const c of CELLS) if (c.type === 'dark')    drawCell(ctx, c, time);
+
+    // Vignette
+    const vig = ctx.createRadialGradient(W/2, H/2, H*0.26, W/2, H/2, H*0.84);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, 'rgba(0,0,0,0.8)');
+    ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
+
+  }, [time]);
+
+  return (
+    <canvas ref={ref} width={W} height={H}
+      style={{ position:'absolute', inset:0, width:'100%', height:'100%' }} />
+  );
+}
+
+// ── Ambient rebirth glow ──────────────────────────────────────────────────────
+function RebirthGlow() {
+  const time = useTime();
+  const g    = Math.max(0, Math.min(1, (time-60)/7));
+  const fade = Math.max(0, Math.min(1, (DURATION - time)/3));
+  const op   = g * fade;
+  if (op < 0.01) return null;
+  return (
+    <div style={{
+      position:'absolute', inset:0, pointerEvents:'none',
+      background:`radial-gradient(ellipse at 50% 55%, hsla(42,85%,62%,${op*0.14}), transparent 68%)`,
+    }}/>
+  );
+}
+
+// ── Poem line ─────────────────────────────────────────────────────────────────
+function PoemLine({ text, start, end }) {
+  const time = useTime();
+  if (time < start - 0.05 || time > end + 0.05) return null;
+  const age    = time - start;
+  const remain = end - time;
+  const raw    = Math.min(age / 1.2, remain / 1.2, 1);
+  const op     = Easing.easeInOutSine(Math.max(0, raw));
+
+  return (
+    <div style={{
+      position:'absolute', left:0, bottom:'12%', width:'100%',
+      textAlign:'center', pointerEvents:'none', userSelect:'none',
+      fontFamily:"'EB Garamond', Georgia, serif",
+      fontStyle:'italic', fontSize:50, fontWeight:400,
+      color:`rgba(242,232,216,${op})`,
+      letterSpacing:'0.028em', lineHeight:1.5,
+      textShadow:`0 0 60px rgba(210,185,140,${op*0.55}), 0 2px 10px rgba(0,0,0,${op*0.85})`,
+      transform:`translateY(${(1-op)*8}px)`,
+      transition:'none',
+    }}>
+      {text}
+    </div>
+  );
+}
+
+// ── Title card ────────────────────────────────────────────────────────────────
+function TitleCard() {
+  const time = useTime();
+  const raw  = Math.min(time/1.8, Math.max(0, (5-time)/2), 1);
+  const op   = Easing.easeInOutSine(Math.max(0, raw));
+  if (op < 0.01) return null;
+  return (
+    <div style={{
+      position:'absolute', inset:0, display:'flex',
+      flexDirection:'column', alignItems:'center', justifyContent:'center',
+      pointerEvents:'none',
+    }}>
+      <div style={{
+        fontFamily:"'EB Garamond', Georgia, serif",
+        fontSize:80, fontWeight:500, letterSpacing:'0.07em',
+        color:`rgba(240,230,212,${op})`,
+        textShadow:`0 0 90px rgba(200,170,120,${op*0.75}), 0 0 200px rgba(150,110,60,${op*0.3})`,
+        textAlign:'center',
+      }}>
+        The Echoing Moment
+      </div>
+    </div>
+  );
+}
+
+// ── Screen label (for comment context) ───────────────────────────────────────
+function ScreenLabelUpdater() {
+  const time  = useTime();
+  const floor = Math.floor(time);
+  const ref   = React.useRef(null);
+  React.useEffect(() => {
+    let el = ref.current;
+    while (el && !el.dataset.screenLabel) el = el.parentElement;
+    if (el) el.dataset.screenLabel = `t=${floor}s`;
+  }, [floor]);
+  return <span ref={ref} style={{display:'none'}}/>;
+}
+
+// ── Poem lines schedule ───────────────────────────────────────────────────────
+const LINES = [
+  // Stanza 1 – innocent, warm, emergence
+  { text: "Within the chambers of remembered time,",           start:  4.0, end:  8.5 },
+  { text: "A single instant holds transformative might,",      start:  9.0, end: 13.5 },
+  { text: "Where memory's soft whisper turns sublime,",        start: 14.0, end: 18.5 },
+  { text: "And shadows of the past embrace the light.",        start: 19.0, end: 23.5 },
+  // Stanza 2 – dark cells invade, tension
+  { text: "What fragment of your story burns so bright,",      start: 25.5, end: 30.0 },
+  { text: "That ripples through the years with silent song?",  start: 30.5, end: 35.0 },
+  { text: "A breath, a touch, a sudden insight's flight,",     start: 35.5, end: 40.0 },
+  { text: "That shifts the very essence where you belong.",    start: 40.5, end: 45.0 },
+  // Stanza 3 – battle, revelation
+  { text: "Some moments break like waves upon the shore,",     start: 47.0, end: 51.5 },
+  { text: "Reshaping landscapes of the inner soul,",           start: 52.0, end: 56.5 },
+  { text: "Revealing depths we never knew before,",            start: 57.0, end: 61.5 },
+  { text: "Completing what was once an incomplete whole.",     start: 62.0, end: 66.0 },
+  // Couplet – rebirth and hope
+  { text: "In memory's embrace, we are reborn,",               start: 67.0, end: 71.0 },
+  { text: "Where past and present dance till new paths form.", start: 70.5, end: 74.0 },
+];
+
+// ── Main composition ──────────────────────────────────────────────────────────
+function EchoingMoment() {
+  return (
+    <div data-screen-label="t=0s" style={{position:'absolute', inset:0}}>
+      <CellCanvas />
+      <RebirthGlow />
+      <TitleCard />
+      {LINES.map((l, i) => <PoemLine key={i} {...l} />)}
+      <ScreenLabelUpdater />
+    </div>
+  );
+}
+
+// ── App ───────────────────────────────────────────────────────────────────────
+function App() {
+  return (
+    <Stage width={W} height={H} duration={DURATION} background="#080508" persistKey="echoing">
+      <EchoingMoment />
+    </Stage>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
