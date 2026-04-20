@@ -1,0 +1,21 @@
+# Wrangler local state
+.wrangler/
+
+# Node
+node_modules/
+
+# Environment files
+.env
+.env.*
+*.env
+
+# API keys and secrets
+*.key
+*.pem
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
