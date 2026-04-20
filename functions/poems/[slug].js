@@ -2,6 +2,12 @@
  * Dynamic poem page renderer with animated shader backgrounds
  */
 
+// Inline the custom HTML content for poems with complex animations
+const CUSTOM_POEMS = {
+  'the-echoing-moment': true,
+  'the-armor-shed': true
+};
+
 export async function onRequestGet(context) {
   const { params, env, request } = context;
   const slug = params.slug;
@@ -20,13 +26,26 @@ export async function onRequestGet(context) {
       return new Response('Poem not found', { status: 404 });
     }
     
-    // For custom shader poems with pre-rendered HTML, serve static file
-    if (poem.shader === 'custom') {
-      const staticUrl = new URL(request.url);
-      staticUrl.pathname = `/poems/${slug}.html`;
-      const staticResponse = await env.ASSETS.fetch(new Request(staticUrl.toString()));
-      if (staticResponse.ok) {
-        return staticResponse;
+    // For custom shader poems, try to serve the static HTML file
+    if (poem.shader === 'custom' || CUSTOM_POEMS[slug]) {
+      try {
+        // Try fetching the static HTML file directly from assets
+        const assetRequest = new Request(
+          `${new URL(request.url).origin}/poems/${slug}.html`,
+          { headers: request.headers }
+        );
+        const staticResponse = await env.ASSETS.fetch(assetRequest);
+        if (staticResponse.status === 200) {
+          return new Response(staticResponse.body, {
+            status: 200,
+            headers: {
+              'Content-Type': 'text/html; charset=utf-8',
+              'Cache-Control': 'public, max-age=3600'
+            }
+          });
+        }
+      } catch (e) {
+        console.log('Static file fetch failed:', e.message);
       }
     }
     
@@ -80,7 +99,6 @@ function renderPoem(poem, tags) {
     <meta name="description" content="A poem by ${escapeHtml(poem.author)}">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body {
             font-family: 'Georgia', serif;
             min-height: 100vh;
@@ -88,13 +106,11 @@ function renderPoem(poem, tags) {
             line-height: 1.8;
             overflow-x: hidden;
         }
-        
         canvas {
             position: fixed;
             inset: 0;
             z-index: -1;
         }
-        
         .container {
             max-width: 700px;
             margin: 0 auto;
@@ -106,7 +122,6 @@ function renderPoem(poem, tags) {
             position: relative;
             z-index: 1;
         }
-        
         .back {
             position: fixed;
             top: 2rem;
@@ -117,37 +132,29 @@ function renderPoem(poem, tags) {
             z-index: 10;
         }
         .back:hover { color: rgba(255,255,255,0.7); }
-        
         h1 {
             font-size: 2.5rem;
             font-weight: 300;
             margin-bottom: 0.5rem;
             text-shadow: 0 2px 20px rgba(0,0,0,0.5);
         }
-        
         .meta {
             color: rgba(255,255,255,0.5);
             font-size: 0.95rem;
             margin-bottom: 2.5rem;
         }
-        
         .poem {
             font-size: 1.15rem;
             line-height: 2;
             text-shadow: 0 1px 10px rgba(0,0,0,0.3);
         }
-        
-        .poem p {
-            margin-bottom: 1.5rem;
-        }
-        
+        .poem p { margin-bottom: 1.5rem; }
         .tags {
             margin-top: 3rem;
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
         }
-        
         .tag {
             font-size: 0.75rem;
             background: rgba(255,255,255,0.08);
@@ -155,101 +162,57 @@ function renderPoem(poem, tags) {
             border-radius: 20px;
             color: rgba(255,255,255,0.5);
         }
-        
         footer {
             margin-top: 4rem;
             text-align: center;
             color: rgba(255,255,255,0.3);
             font-size: 0.85rem;
         }
-        
         footer a { color: rgba(255,255,255,0.4); }
     </style>
 </head>
 <body>
     <canvas id="bg"></canvas>
     <a href="/" class="back">← Po3m</a>
-    
     <div class="container">
         <h1>${escapeHtml(poem.title)}</h1>
         <div class="meta">by ${escapeHtml(poem.author)} · ${poem.date}</div>
-        
-        <div class="poem">
-            <p>${poemHtml}</p>
-        </div>
-        
+        <div class="poem"><p>${poemHtml}</p></div>
         ${tags.length ? `<div class="tags">${tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
-        
-        <footer>
-            <p><a href="/">Po3m.com</a></p>
-        </footer>
+        <footer><p><a href="/">Po3m.com</a></p></footer>
     </div>
-    
     <script>
         const canvas = document.getElementById('bg');
         const ctx = canvas.getContext('2d');
-        
         let w, h;
         const particles = [];
         const colors = ${JSON.stringify(colors)};
         const particleRGB = '${particleColor}';
-        
-        function resize() {
-            w = canvas.width = window.innerWidth;
-            h = canvas.height = window.innerHeight;
-        }
-        
+        function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
         function createParticle() {
-            return {
-                x: Math.random() * w,
-                y: Math.random() * h,
-                vx: (Math.random() - 0.5) * 0.5,
-                vy: (Math.random() - 0.5) * 0.5,
-                size: Math.random() * 3 + 1,
-                alpha: Math.random() * 0.5 + 0.2
-            };
+            return { x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5, size: Math.random() * 3 + 1, alpha: Math.random() * 0.5 + 0.2 };
         }
-        
-        function init() {
-            resize();
-            for (let i = 0; i < 60; i++) {
-                particles.push(createParticle());
-            }
-        }
-        
+        function init() { resize(); for (let i = 0; i < 60; i++) particles.push(createParticle()); }
         let gradientAngle = 0;
-        
         function draw() {
             gradientAngle += 0.002;
-            
-            // Animated gradient background
             const gx = Math.cos(gradientAngle) * w + w/2;
             const gy = Math.sin(gradientAngle) * h + h/2;
             const gradient = ctx.createRadialGradient(gx, gy, 0, w/2, h/2, Math.max(w, h));
             colors.forEach((c, i) => gradient.addColorStop(i / (colors.length - 1), c));
-            
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, w, h);
-            
-            // Particles
             particles.forEach(p => {
-                p.x += p.vx;
-                p.y += p.vy;
-                
-                if (p.x < 0) p.x = w;
-                if (p.x > w) p.x = 0;
-                if (p.y < 0) p.y = h;
-                if (p.y > h) p.y = 0;
-                
+                p.x += p.vx; p.y += p.vy;
+                if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+                if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                 ctx.fillStyle = 'rgba(' + particleRGB + ', ' + p.alpha + ')';
                 ctx.fill();
             });
-            
             requestAnimationFrame(draw);
         }
-        
         window.addEventListener('resize', resize);
         init();
         draw();
@@ -259,9 +222,5 @@ function renderPoem(poem, tags) {
 }
 
 function escapeHtml(text) {
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
