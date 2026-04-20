@@ -3,8 +3,16 @@
  */
 
 export async function onRequestGet(context) {
-  const { params, env } = context;
+  const { params, env, request } = context;
   const slug = params.slug;
+  
+  // For custom shader poems (like echoing-moment, armor-shed), 
+  // let Cloudflare serve the static HTML file instead
+  const customShaderPoems = ['the-echoing-moment', 'the-armor-shed'];
+  if (customShaderPoems.includes(slug)) {
+    // Return null/undefined to let Pages serve static file
+    return env.ASSETS.fetch(new Request(`${new URL(request.url).origin}/poems/${slug}.html`));
+  }
   
   try {
     const poem = await env.DB.prepare(
