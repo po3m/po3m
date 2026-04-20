@@ -8,7 +8,7 @@ bucket = "./public"
 [[d1_databases]]
 binding = "DB"
 database_name = "po3m-db"
-database_id = "" # To be filled after D1 creation
+database_id = "33c82c79-28b6-4415-b7a5-b95b2cd4541b"
 
 [vars]
 ENVIRONMENT = "production"
