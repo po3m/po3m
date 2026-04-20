@@ -23,8 +23,8 @@ export async function onRequestGet(context) {
     // For custom shader poems, redirect to static animation page
     if (poem.shader === 'custom') {
       const staticMap = {
-        'the-echoing-moment': '/static/echoing-moment-animation.html',
-        'the-armor-shed': '/static/armor-shed-animation.html'
+        'the-echoing-moment': '/static/echoing-moment-animation',
+        'the-armor-shed': '/static/armor-shed-animation'
       };
       
       if (staticMap[slug]) {
