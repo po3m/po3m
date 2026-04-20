@@ -1,0 +1,15 @@
+{
+  "name": "po3m",
+  "version": "1.0.0",
+  "description": "Collaborative poetry platform with shader-based visual renderings",
+  "scripts": {
+    "dev": "wrangler pages dev ./public",
+    "deploy": "wrangler pages deploy ./public",
+    "db:init": "wrangler d1 execute po3m-db --file=./schema.sql"
+  },
+  "author": "Po3m Collective",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

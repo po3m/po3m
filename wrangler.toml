@@ -1,0 +1,14 @@
+name = "po3m"
+main = "functions/api/submit.js"
+compatibility_date = "2026-04-20"
+
+[site]
+bucket = "./public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "po3m-db"
+database_id = "" # To be filled after D1 creation
+
+[vars]
+ENVIRONMENT = "production"
