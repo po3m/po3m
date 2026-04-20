@@ -6,6 +6,11 @@ export async function onRequestGet(context) {
   const { params, env, request } = context;
   const slug = params.slug;
   
+  // Let static assets pass through
+  if (slug.includes('.')) {
+    return env.ASSETS.fetch(request);
+  }
+  
   // For custom shader poems (like echoing-moment, armor-shed), 
   // let Cloudflare serve the static HTML file instead
   const customShaderPoems = ['the-echoing-moment', 'the-armor-shed'];
