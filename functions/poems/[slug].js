@@ -6,17 +6,9 @@ export async function onRequestGet(context) {
   const { params, env, request } = context;
   const slug = params.slug;
   
-  // Let static assets pass through
+  // Let static assets pass through (like .jsx files)
   if (slug.includes('.')) {
     return env.ASSETS.fetch(request);
-  }
-  
-  // For custom shader poems (like echoing-moment, armor-shed), 
-  // let Cloudflare serve the static HTML file instead
-  const customShaderPoems = ['the-echoing-moment', 'the-armor-shed'];
-  if (customShaderPoems.includes(slug)) {
-    // Return null/undefined to let Pages serve static file
-    return env.ASSETS.fetch(new Request(`${new URL(request.url).origin}/poems/${slug}.html`));
   }
   
   try {
@@ -26,6 +18,16 @@ export async function onRequestGet(context) {
     
     if (!poem) {
       return new Response('Poem not found', { status: 404 });
+    }
+    
+    // For custom shader poems with pre-rendered HTML, serve static file
+    if (poem.shader === 'custom') {
+      const staticUrl = new URL(request.url);
+      staticUrl.pathname = `/poems/${slug}.html`;
+      const staticResponse = await env.ASSETS.fetch(new Request(staticUrl.toString()));
+      if (staticResponse.ok) {
+        return staticResponse;
+      }
     }
     
     const tags = JSON.parse(poem.tags || '[]');
