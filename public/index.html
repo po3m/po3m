@@ -344,16 +344,7 @@
                     (p.tags || []).forEach(t => allTags.add(t));
                 });
                 
-                // Build filter tags
-                const filters = document.getElementById('filters');
-                allTags.forEach(tag => {
-                    const span = document.createElement('span');
-                    span.className = 'filter-tag';
-                    span.dataset.filter = tag;
-                    span.textContent = tag;
-                    span.onclick = () => filterBy(tag);
-                    filters.appendChild(span);
-                });
+                // Tags collected for autocomplete
                 
                 // Update stats
                 document.getElementById('poem-count').textContent = allPoems.length;

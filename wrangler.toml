@@ -1,9 +1,6 @@
 name = "po3m"
-main = "functions/api/submit.js"
+pages_build_output_dir = "./public"
 compatibility_date = "2026-04-20"
-
-[site]
-bucket = "./public"
 
 [[d1_databases]]
 binding = "DB"
