@@ -1,0 +1,12 @@
+# Po3m.com Robots.txt
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://po3m.com/sitemap.xml
+
+# Crawl-delay for politeness
+Crawl-delay: 1
+
+# Block admin area
+Disallow: /admin/

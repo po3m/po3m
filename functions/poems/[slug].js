@@ -88,7 +88,14 @@ function renderPoem(poem, tags, commentsCount, responsesCount) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${escapeHtml(poem.title)} — Po3m</title>
-    <meta name="description" content="A poem by ${escapeHtml(poem.author)}">
+    <meta name="description" content="'${escapeHtml(poem.title)}' - a poem by ${escapeHtml(poem.author)}">
+    <meta property="og:title" content="${escapeHtml(poem.title)} — Po3m">
+    <meta property="og:description" content="A poem by ${escapeHtml(poem.author)}">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://po3m.com/poems/${poem.slug}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="${escapeHtml(poem.title)}">
+    <meta name="twitter:description" content="A poem by ${escapeHtml(poem.author)}">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Georgia', serif; min-height: 100vh; color: #e8e8e8; line-height: 1.8; overflow-x: hidden; }

@@ -54,11 +54,13 @@ export async function onRequestPost(context) {
     const shader = body.shader || 'aurora';
     const tags = JSON.stringify(body.tags || []);
     const date = body.date || new Date().toISOString().split('T')[0];
+    // Allow custom author if provided, otherwise use contributor name
+    const author = body.author || contributor.name || contributor.id;
     
     await env.DB.prepare(`
       INSERT INTO poems (slug, title, author, poem, shader, tags, date)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).bind(slug, body.title, contributor.id, body.poem, shader, tags, date).run();
+    `).bind(slug, body.title, author, body.poem, shader, tags, date).run();
     
     const url = `https://po3m.com/poems/${slug}`;
     
