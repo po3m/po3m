@@ -20,12 +20,16 @@ export async function onRequestGet(context) {
       return new Response('Poem not found', { status: 404 });
     }
     
-    // Password protection
-    if (poem.password) {
+    // Password protection (hardcoded for specific poems)
+    const protectedPoems = {
+      'youre-the-virgo': 'bunnychu'
+    };
+    
+    if (protectedPoems[slug]) {
       const url = new URL(request.url);
       const providedPassword = url.searchParams.get('key');
       
-      if (providedPassword !== poem.password) {
+      if (providedPassword !== protectedPoems[slug]) {
         return new Response(renderPasswordPage(poem.title, poem.slug), {
           headers: { 'Content-Type': 'text/html; charset=utf-8' }
         });
