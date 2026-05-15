@@ -120,8 +120,13 @@
         </div>
         
         <div id="content" class="hidden">
+            <h2 style="margin-top: 2rem; font-weight: 300; color: #aaa;">Poem Submissions</h2>
             <p class="count" id="count"></p>
             <div id="queue"></div>
+            
+            <h2 style="margin-top: 3rem; font-weight: 300; color: #aaa;">Comments</h2>
+            <p class="count" id="comment-count"></p>
+            <div id="comments"></div>
         </div>
     </div>
     
@@ -147,8 +152,115 @@
                 document.getElementById('auth-form').classList.add('hidden');
                 
                 renderQueue(data.pending);
+                
+                // Also load comments
+                loadComments();
             } catch (err) {
                 alert('Error loading queue');
+            }
+        }
+        
+        async function loadComments() {
+            try {
+                const res = await fetch('/api/admin/comments', {
+                    headers: { 'Authorization': `Bearer ${adminKey}` }
+                });
+                
+                if (!res.ok) return;
+                
+                const data = await res.json();
+                renderComments(data.comments || []);
+            } catch (err) {
+                console.error('Error loading comments:', err);
+            }
+        }
+        
+        function renderComments(comments) {
+            const container = document.getElementById('comments');
+            const count = document.getElementById('comment-count');
+            
+            count.textContent = `${comments.length} pending comment${comments.length !== 1 ? 's' : ''}`;
+            
+            if (comments.length === 0) {
+                container.innerHTML = '<div class="empty">No pending comments 🎉</div>';
+                return;
+            }
+            
+            container.innerHTML = comments.map(c => `
+                <div class="poem-card" id="comment-${c.id}">
+                    <div class="poem-header">
+                        <div>
+                            <div class="poem-title">On: ${escapeHtml(c.poem_title || c.poem_slug)}</div>
+                            <div class="poem-meta">
+                                by ${escapeHtml(c.author_name || 'Anonymous')} · ${c.created_at}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="poem-text">${escapeHtml(c.body)}</div>
+                    <div class="poem-footer">
+                        <button class="btn btn-approve" onclick="approveComment(${c.id})">✓ Approve</button>
+                        <button class="btn btn-reject" onclick="rejectComment(${c.id})">✗ Reject</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function approveComment(id) {
+            if (!confirm('Approve this comment?')) return;
+            
+            try {
+                const res = await fetch('/api/admin/comments', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${adminKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ id, action: 'approve' })
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById(`comment-${id}`).remove();
+                    updateCommentCount();
+                } else {
+                    alert(data.error || 'Error approving');
+                }
+            } catch (err) {
+                alert('Error approving comment');
+            }
+        }
+        
+        async function rejectComment(id) {
+            if (!confirm('Delete this comment?')) return;
+            
+            try {
+                const res = await fetch('/api/admin/comments', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${adminKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ id, action: 'reject' })
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById(`comment-${id}`).remove();
+                    updateCommentCount();
+                } else {
+                    alert(data.error || 'Error rejecting');
+                }
+            } catch (err) {
+                alert('Error rejecting comment');
+            }
+        }
+        
+        function updateCommentCount() {
+            const remaining = document.querySelectorAll('[id^="comment-"]').length;
+            document.getElementById('comment-count').textContent = 
+                `${remaining} pending comment${remaining !== 1 ? 's' : ''}`;
+            if (remaining === 0) {
+                document.getElementById('comments').innerHTML = '<div class="empty">No pending comments 🎉</div>';
             }
         }
         
