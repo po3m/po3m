@@ -63,6 +63,10 @@ export async function onRequestPost(context) {
       updates.push('date = ?');
       params.push(body.date);
     }
+    if (body.password !== undefined) {
+      updates.push('password = ?');
+      params.push(body.password || null);
+    }
     
     if (updates.length === 0) {
       return jsonResponse({ error: 'No fields to update' }, 400);

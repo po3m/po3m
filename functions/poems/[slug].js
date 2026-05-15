@@ -20,6 +20,18 @@ export async function onRequestGet(context) {
       return new Response('Poem not found', { status: 404 });
     }
     
+    // Password protection
+    if (poem.password) {
+      const url = new URL(request.url);
+      const providedPassword = url.searchParams.get('key');
+      
+      if (providedPassword !== poem.password) {
+        return new Response(renderPasswordPage(poem.title, poem.slug), {
+          headers: { 'Content-Type': 'text/html; charset=utf-8' }
+        });
+      }
+    }
+    
     // For custom shader poems, redirect to static animation page
     if (poem.shader === 'custom') {
       const staticMap = {
@@ -309,3 +321,44 @@ function renderPoem(poem, tags, commentsCount, responsesCount) {
 }
 
 function escapeHtml(text) { return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function renderPasswordPage(title, slug) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${escapeHtml(title)} — Po3m</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Georgia', serif; min-height: 100vh; background: #0a0a0f; color: #e8e8e8; display: flex; align-items: center; justify-content: center; }
+        .container { text-align: center; padding: 2rem; }
+        h1 { font-size: 2rem; font-weight: 300; margin-bottom: 0.5rem; }
+        p { color: #888; margin-bottom: 2rem; }
+        input { padding: 0.8rem 1.2rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #e8e8e8; font-size: 1rem; width: 250px; text-align: center; }
+        button { margin-top: 1rem; padding: 0.8rem 2rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #e8e8e8; cursor: pointer; font-size: 1rem; }
+        button:hover { background: rgba(255,255,255,0.15); }
+        .back { position: fixed; top: 2rem; left: 2rem; color: rgba(255,255,255,0.4); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <a href="/" class="back">← Po3m</a>
+    <div class="container">
+        <h1>${escapeHtml(title)}</h1>
+        <p>This poem is password protected.</p>
+        <form onsubmit="go(event)">
+            <input type="password" id="pw" placeholder="Enter password" autofocus>
+            <br>
+            <button type="submit">Unlock</button>
+        </form>
+    </div>
+    <script>
+        function go(e) {
+            e.preventDefault();
+            const pw = document.getElementById('pw').value;
+            window.location.href = '/poems/${slug}?key=' + encodeURIComponent(pw);
+        }
+    </script>
+</body>
+</html>`;
+}
