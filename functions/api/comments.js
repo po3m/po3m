@@ -71,18 +71,22 @@ export async function onRequestPost(context) {
       return Response.json({ error: 'Poem not found' }, { status: 404 });
     }
     
+    // Get IP address from Cloudflare
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    
     // Insert comment (pending approval)
     await env.DB.prepare(
-      'INSERT INTO comments (poem_slug, author_name, body, approved) VALUES (?, ?, ?, 0)'
-    ).bind(poem_slug, author_name?.trim() || 'Anonymous', body.trim()).run();
+      'INSERT INTO comments (poem_slug, author_name, body, approved, ip) VALUES (?, ?, ?, 0, ?)'
+    ).bind(poem_slug, author_name?.trim() || 'Anonymous', body.trim(), ip).run();
     
-    // Send Telegram notification
+    // Send Telegram notification with IP
     const authorDisplay = author_name?.trim() || 'Anonymous';
     const preview = body.length > 100 ? body.substring(0, 100) + '...' : body;
     await notifyTelegram(
       `💬 <b>New comment on Po3m</b>\n\n` +
       `On: <i>${poem.title}</i>\n` +
-      `From: ${authorDisplay}\n\n` +
+      `From: ${authorDisplay}\n` +
+      `IP: <code>${ip}</code>\n\n` +
       `"${preview}"\n\n` +
       `<a href="https://po3m.com/admin">Review →</a>`
     );

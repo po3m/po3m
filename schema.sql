@@ -25,3 +25,16 @@ CREATE TABLE IF NOT EXISTS contributors (
 CREATE INDEX idx_poems_author ON poems(author);
 CREATE INDEX idx_poems_date ON poems(date);
 CREATE INDEX idx_poems_published ON poems(published);
+
+-- Spam log for rejected comments (keeps IP evidence)
+CREATE TABLE IF NOT EXISTS spam_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    poem_slug TEXT,
+    author_name TEXT,
+    body TEXT,
+    ip TEXT,
+    original_created_at TEXT,
+    logged_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_spam_ip ON spam_log(ip);

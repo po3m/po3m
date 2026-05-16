@@ -53,8 +53,15 @@ export async function onRequestPost(context) {
       await env.DB.prepare('UPDATE comments SET approved = 1 WHERE id = ?').bind(id).run();
       return Response.json({ success: true, message: 'Comment approved' });
     } else {
+      // Archive to spam_log before deleting
+      const comment = await env.DB.prepare('SELECT * FROM comments WHERE id = ?').bind(id).first();
+      if (comment) {
+        await env.DB.prepare(
+          'INSERT INTO spam_log (poem_slug, author_name, body, ip, original_created_at) VALUES (?, ?, ?, ?, ?)'
+        ).bind(comment.poem_slug, comment.author_name, comment.body, comment.ip || 'unknown', comment.created_at).run();
+      }
       await env.DB.prepare('DELETE FROM comments WHERE id = ?').bind(id).run();
-      return Response.json({ success: true, message: 'Comment deleted' });
+      return Response.json({ success: true, message: 'Comment deleted and logged' });
     }
     
   } catch (err) {
