@@ -45,6 +45,11 @@ export async function onRequestGet(context) {
   });
 }
 
+// Blocked IPs — silent fail (spammers/harassers)
+const BLOCKED_IPS = [
+  '2405:201:e015:51bf:1c0c:e175:2857:b6c1', // "Poverty Man" — targeted harassment 2026-05-27
+];
+
 export async function onRequestPost(context) {
   const { env, request } = context;
   
@@ -55,6 +60,12 @@ export async function onRequestPost(context) {
     // Honeypot check
     if (honeypot) {
       return Response.json({ success: true, message: 'Comment submitted' }); // Silent fail for bots
+    }
+
+    // IP blocklist check — silent fail
+    const incomingIp = request.headers.get('CF-Connecting-IP') || 'unknown';
+    if (BLOCKED_IPS.includes(incomingIp)) {
+      return Response.json({ success: true, message: 'Comment submitted' }); // Silent fail
     }
     
     if (!poem_slug || !body || body.trim().length < 2) {
@@ -71,13 +82,10 @@ export async function onRequestPost(context) {
       return Response.json({ error: 'Poem not found' }, { status: 404 });
     }
     
-    // Get IP address from Cloudflare
-    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-    
     // Insert comment (pending approval)
     await env.DB.prepare(
       'INSERT INTO comments (poem_slug, author_name, body, approved, ip) VALUES (?, ?, ?, 0, ?)'
-    ).bind(poem_slug, author_name?.trim() || 'Anonymous', body.trim(), ip).run();
+    ).bind(poem_slug, author_name?.trim() || 'Anonymous', body.trim(), incomingIp).run();
     
     // Send Telegram notification with IP
     const authorDisplay = author_name?.trim() || 'Anonymous';
@@ -86,7 +94,7 @@ export async function onRequestPost(context) {
       `💬 <b>New comment on Po3m</b>\n\n` +
       `On: <i>${poem.title}</i>\n` +
       `From: ${authorDisplay}\n` +
-      `IP: <code>${ip}</code>\n\n` +
+      `IP: <code>${incomingIp}</code>\n\n` +
       `"${preview}"\n\n` +
       `<a href="https://po3m.com/admin">Review →</a>`
     );
