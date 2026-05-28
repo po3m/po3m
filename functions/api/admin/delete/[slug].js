@@ -2,19 +2,21 @@
  * Admin endpoint to delete poems by slug
  */
 
+const ADMIN_KEY = 'f0b88a4e93b779f0df060a1cf72a703de133cf6514844b8eb9a713d3477ec423';
+
+function checkAuth(request) {
+  const auth = request.headers.get('Authorization');
+  if (!auth) return false;
+  const key = auth.replace('Bearer ', '');
+  return key === ADMIN_KEY;
+}
+
 export async function onRequestDelete(context) {
   const { request, env, params } = context;
   const slug = params.slug;
   
-  // Check authorization
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!checkAuth(request)) {
     return new Response('Unauthorized', { status: 401 });
-  }
-  
-  const token = authHeader.substring(7);
-  if (token !== env.API_KEY) {
-    return new Response('Invalid token', { status: 401 });
   }
   
   if (!slug) {
