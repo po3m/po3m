@@ -387,7 +387,7 @@
         
         async function loadPoems() {
             try {
-                const res = await fetch('/api/poems');
+                const res = await fetch('/api/poems?limit=100');
                 const data = await res.json();
                 
                 const grid = document.getElementById('poems');
