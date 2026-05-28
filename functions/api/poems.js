@@ -14,11 +14,24 @@ export async function onRequestGet(context) {
       'SELECT slug, title, author, date, tags, shader FROM poems WHERE published = 1 ORDER BY created_at DESC LIMIT ? OFFSET ?'
     ).bind(limit, offset).all();
     
-    const poems = (results.results || []).map(p => ({
-      ...p,
-      tags: JSON.parse(p.tags || '[]'),
-      url: `https://po3m.com/poems/${p.slug}`
-    }));
+    const poems = (results.results || []).map(p => {
+      let tags = [];
+      try {
+        tags = JSON.parse(p.tags || '[]');
+        // Ensure it's always an array
+        if (!Array.isArray(tags)) {
+          tags = [];
+        }
+      } catch (e) {
+        console.log('Failed to parse tags for', p.slug, ':', p.tags);
+        tags = [];
+      }
+      return {
+        ...p,
+        tags: tags,
+        url: `https://po3m.com/poems/${p.slug}`
+      };
+    });
     
     return new Response(JSON.stringify({ poems }), {
       headers: {
