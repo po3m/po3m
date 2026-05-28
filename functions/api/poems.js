@@ -11,7 +11,7 @@ export async function onRequestGet(context) {
     const offset = parseInt(url.searchParams.get('offset') || '0');
     
     const results = await env.DB.prepare(
-      'SELECT slug, title, author, date, tags, shader FROM poems WHERE published = 1 ORDER BY created_at DESC LIMIT ? OFFSET ?'
+      'SELECT slug, title, author, date, tags, shader, featured FROM poems WHERE published = 1 ORDER BY created_at DESC LIMIT ? OFFSET ?'
     ).bind(limit, offset).all();
     
     const poems = (results.results || []).map(p => ({

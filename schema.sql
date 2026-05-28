@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS poems (
     shader TEXT DEFAULT 'aurora',
     tags TEXT DEFAULT '[]',
     date TEXT,
+    featured BOOLEAN DEFAULT FALSE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     published BOOLEAN DEFAULT TRUE
 );
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS contributors (
 CREATE INDEX idx_poems_author ON poems(author);
 CREATE INDEX idx_poems_date ON poems(date);
 CREATE INDEX idx_poems_published ON poems(published);
+CREATE INDEX idx_poems_featured ON poems(featured);
 
 -- Spam log for rejected comments (keeps IP evidence)
 CREATE TABLE IF NOT EXISTS spam_log (

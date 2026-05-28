@@ -67,6 +67,10 @@ export async function onRequestPost(context) {
       updates.push('password = ?');
       params.push(body.password || null);
     }
+    if (body.featured !== undefined) {
+      updates.push('featured = ?');
+      params.push(body.featured ? 1 : 0);
+    }
     
     if (updates.length === 0) {
       return jsonResponse({ error: 'No fields to update' }, 400);
