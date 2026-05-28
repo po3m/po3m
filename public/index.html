@@ -412,6 +412,7 @@
                 renderPoems(allPoems);
             } catch (e) {
                 console.error('Failed to load poems:', e);
+                document.getElementById('poems').innerHTML = `<div style="color: red; padding: 20px;">Error loading poems: ${e.message}</div>`;
             }
         }
         
