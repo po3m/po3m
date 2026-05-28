@@ -1,12 +1,65 @@
 # Po3m.com Robots.txt
+
+# Standard crawlers — welcome, but be polite
 User-agent: *
 Allow: /
+Disallow: /admin/
+Crawl-delay: 1
+
+# AI training crawlers — not welcome
+# Full poems are copyright Faith in Love Foundation Limited. All rights reserved.
+# Scraping for AI/ML training datasets is strictly prohibited.
+
+User-agent: GPTBot
+Disallow: /poems/
+
+User-agent: ChatGPT-User
+Disallow: /poems/
+
+User-agent: ClaudeBot
+Disallow: /poems/
+
+User-agent: anthropic-ai
+Disallow: /poems/
+
+User-agent: CCBot
+Disallow: /poems/
+
+User-agent: Google-Extended
+Disallow: /poems/
+
+User-agent: Googlebot-Extended
+Disallow: /poems/
+
+User-agent: Meta-ExternalAgent
+Disallow: /poems/
+
+User-agent: Bytespider
+Disallow: /poems/
+
+User-agent: Amazonbot
+Disallow: /poems/
+
+User-agent: cohere-ai
+Disallow: /poems/
+
+User-agent: PerplexityBot
+Disallow: /poems/
+
+User-agent: YouBot
+Disallow: /poems/
+
+User-agent: omgili
+Disallow: /poems/
+
+User-agent: omgilibot
+Disallow: /poems/
+
+User-agent: DataForSeoBot
+Disallow: /poems/
+
+User-agent: ImagesiftBot
+Disallow: /poems/
 
 # Sitemaps
 Sitemap: https://po3m.com/sitemap.xml
-
-# Crawl-delay for politeness
-Crawl-delay: 1
-
-# Block admin area
-Disallow: /admin/
