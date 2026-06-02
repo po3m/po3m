@@ -99,7 +99,7 @@ function renderPoem(poem, tags, commentsCount, responsesCount) {
   let processedPoem = poem.poem;
   // Escape HTML first, then restore allowed link tags
   processedPoem = escapeHtml(processedPoem)
-    .replace(/<a\s+([^>]*)href=["']([^"']*)["']([^>]*)>/gi, '<a $1href="$2"$3 target="_blank" rel="noopener">')
+    .replace(/&lt;a\s+([^&]*?)href=["']([^"']*)["']([^&]*?)&gt;/gi, '<a $1href="$2"$3 target="_blank" rel="noopener">')
     .replace(/&lt;\/a&gt;/gi, '</a>');
   
   const poemHtml = processedPoem.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
