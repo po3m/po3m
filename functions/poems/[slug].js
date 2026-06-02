@@ -95,7 +95,14 @@ function renderPoem(poem, tags, commentsCount, responsesCount) {
   const config = shaderConfigs[poem.shader] || shaderConfigs.aurora;
   const colors = config.colors;
   const particleColor = config.particleColor;
-  const poemHtml = escapeHtml(poem.poem).replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+  // Process poem to enable HTML links while preserving formatting
+  let processedPoem = poem.poem;
+  // Escape HTML first, then restore allowed link tags
+  processedPoem = escapeHtml(processedPoem)
+    .replace(/<a\s+([^>]*)href=["']([^"']*)["']([^>]*)>/gi, '<a $1href="$2"$3 target="_blank" rel="noopener">')
+    .replace(/&lt;\/a&gt;/gi, '</a>');
+  
+  const poemHtml = processedPoem.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
   const slug = poem.slug;
   
   return `<!DOCTYPE html>
