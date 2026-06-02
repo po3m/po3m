@@ -97,10 +97,18 @@ function renderPoem(poem, tags, commentsCount, responsesCount) {
   const particleColor = config.particleColor;
   // Process poem to enable HTML links while preserving formatting
   let processedPoem = poem.poem;
-  // Escape HTML first, then restore allowed link tags
-  processedPoem = escapeHtml(processedPoem)
-    .replace(/&lt;a\s+([^&]*?)href=["']([^"']*)["']([^&]*?)&gt;/gi, '<a $1href="$2"$3 target="_blank" rel="noopener">')
-    .replace(/&lt;\/a&gt;/gi, '</a>');
+  // First allow link tags, then escape everything else
+  processedPoem = processedPoem
+    .replace(/<a\s+([^>]*)href=["']([^"']*)["']([^>]*)>/gi, '___LINK_START___$1___HREF___$2___ATTRS___$3___LINK_MID___')
+    .replace(/<\/a>/gi, '___LINK_END___');
+  
+  // Now escape all remaining HTML
+  processedPoem = escapeHtml(processedPoem);
+  
+  // Restore the link tags
+  processedPoem = processedPoem
+    .replace(/___LINK_START___([^_]*)___HREF___([^_]*)___ATTRS___([^_]*)___LINK_MID___/gi, '<a $1href="$2"$3 target="_blank" rel="noopener">')
+    .replace(/___LINK_END___/gi, '</a>');
   
   const poemHtml = processedPoem.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
   const slug = poem.slug;
