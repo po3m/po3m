@@ -129,7 +129,7 @@ function renderPoem(poem, tags, commentsCount, responsesCount) {
     <meta name="twitter:description" content="A poem by ${escapeHtml(poem.author)}">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Georgia', serif; min-height: 100vh; color: #e8e8e8; line-height: 1.8; overflow-x: hidden; }
+        body { font-family: 'Georgia', serif; min-height: 100vh; color: #e8e8e8; line-height: 1.8; overflow-x: hidden; padding-bottom: 80px; }
         canvas { position: fixed; inset: 0; z-index: -1; }
         .container { max-width: 700px; margin: 0 auto; padding: 4rem 2rem; position: relative; z-index: 1; }
         .back { position: fixed; top: 2rem; left: 2rem; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.9rem; z-index: 10; }
@@ -335,6 +335,9 @@ function renderPoem(poem, tags, commentsCount, responsesCount) {
         
         loadComments();
     </script>
+    
+    <!-- Po3m Navigation Enhancement -->
+    <script src="/static/poem-navigation.js"></script>
 </body>
 </html>`;
 }
