@@ -84,6 +84,7 @@ export async function onRequestGet(context) {
 }
 
 function renderPoem(poem, tags, commentsCount, responsesCount) {
+  const excerpt = escapeHtml(poem.poem.replace(/\n/g, " ").replace(/\*/g, "").trim().slice(0, 160));
   const shaderConfigs = {
     aurora: { colors: ['#1a0a2e', '#16213e', '#0f3460', '#533483'], particleColor: '100, 200, 150' },
     waves: { colors: ['#0a1628', '#0d2137', '#0f3460', '#1a5276'], particleColor: '100, 180, 255' },
@@ -109,6 +110,9 @@ function renderPoem(poem, tags, commentsCount, responsesCount) {
   processedPoem = processedPoem
     .replace(/___LINK_START___([^_]*)___HREF___([^_]*)___ATTRS___([^_]*)___LINK_MID___/gi, '<a $1href="$2"$3 target="_blank" rel="noopener">')
     .replace(/___LINK_END___/gi, '</a>');
+
+  // Convert markdown italic *text* to <em>
+  processedPoem = processedPoem.replace(/\*([^*]+)\*/g, '<em>$1</em>');
   
   const poemHtml = processedPoem.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
   const slug = poem.slug;
@@ -119,14 +123,26 @@ function renderPoem(poem, tags, commentsCount, responsesCount) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${escapeHtml(poem.title)} — Po3m</title>
-    <meta name="description" content="'${escapeHtml(poem.title)}' - a poem by ${escapeHtml(poem.author)}">
+    <meta name="description" content="${excerpt}">
     <meta property="og:title" content="${escapeHtml(poem.title)} — Po3m">
-    <meta property="og:description" content="A poem by ${escapeHtml(poem.author)}">
+    <meta property="og:description" content="${excerpt}">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://po3m.com/poems/${poem.slug}">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="${escapeHtml(poem.title)}">
-    <meta name="twitter:description" content="A poem by ${escapeHtml(poem.author)}">
+    <meta name="twitter:description" content="${excerpt}">
+    <link rel="canonical" href="https://po3m.com/poems/${poem.slug}">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "CreativeWork",
+      "name": "${escapeHtml(poem.title)}",
+      "author": { "@type": "Person", "name": "${escapeHtml(poem.author)}" },
+      "datePublished": "${poem.date}",
+      "description": "${excerpt}",
+      "url": "https://po3m.com/poems/${poem.slug}"
+    }
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Georgia', serif; min-height: 100vh; color: #e8e8e8; line-height: 1.8; overflow-x: hidden; padding-bottom: 80px; }
