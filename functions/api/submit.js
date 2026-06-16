@@ -35,8 +35,8 @@ export async function onRequestPost(context) {
       }, 400);
     }
     
-    // Generate slug from title
-    const slug = generateSlug(body.title);
+    // Generate slug from title, allow override for CJK/non-ASCII titles
+    const slug = body.slug || generateSlug(body.title);
     
     // Check for duplicate slug
     const existing = await env.DB.prepare(
