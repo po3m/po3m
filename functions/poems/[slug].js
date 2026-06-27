@@ -84,7 +84,7 @@ export async function onRequestGet(context) {
 }
 
 function renderPoem(poem, tags, commentsCount, responsesCount) {
-  const excerpt = escapeHtml(poem.poem.replace(/\n/g, " ").replace(/\*/g, "").trim().slice(0, 160));
+  const excerpt = escapeHtml(poem.poem.replace(/<[^>]+>/g, "").replace(/\n/g, " ").replace(/\*/g, "").trim().slice(0, 160));
   const shaderConfigs = {
     aurora: { colors: ['#1a0a2e', '#16213e', '#0f3460', '#533483'], particleColor: '100, 200, 150' },
     waves: { colors: ['#0a1628', '#0d2137', '#0f3460', '#1a5276'], particleColor: '100, 180, 255' },
@@ -96,24 +96,28 @@ function renderPoem(poem, tags, commentsCount, responsesCount) {
   const config = shaderConfigs[poem.shader] || shaderConfigs.aurora;
   const colors = config.colors;
   const particleColor = config.particleColor;
-  // Process poem to enable HTML links while preserving formatting
-  let processedPoem = poem.poem;
-  // First allow link tags, then escape everything else
-  processedPoem = processedPoem
-    .replace(/<a\s+([^>]*)href=["']([^"']*)["']([^>]*)>/gi, '___LINK_START___$1___HREF___$2___ATTRS___$3___LINK_MID___')
-    .replace(/<\/a>/gi, '___LINK_END___');
-  
+  // Process poem to enable HTML links while preserving formatting.
+  // Capture each <a> into an array behind an ASCII sentinel, escape the rest,
+  // then restore. Safe for hrefs with underscores, query strings, etc.
+  // (the previous placeholder regex broke on any '_' in the URL).
+  const links = [];
+  let processedPoem = poem.poem.replace(
+    /<a\s+[^>]*?href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi,
+    (m, href, text) => '@@LINK' + (links.push({ href, text }) - 1) + 'LINK@@'
+  );
+
   // Now escape all remaining HTML
   processedPoem = escapeHtml(processedPoem);
-  
-  // Restore the link tags
-  processedPoem = processedPoem
-    .replace(/___LINK_START___([^_]*)___HREF___([^_]*)___ATTRS___([^_]*)___LINK_MID___/gi, '<a $1href="$2"$3 target="_blank" rel="noopener">')
-    .replace(/___LINK_END___/gi, '</a>');
 
   // Convert markdown italic *text* to <em>
   processedPoem = processedPoem.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  
+
+  // Restore the captured links (href and text both safely escaped)
+  processedPoem = processedPoem.replace(/@@LINK(\d+)LINK@@/g, (m, i) => {
+    const { href, text } = links[Number(i)];
+    return '<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener">' + escapeHtml(text) + '</a>';
+  });
+
   const poemHtml = processedPoem.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
   const slug = poem.slug;
   
