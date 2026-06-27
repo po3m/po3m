@@ -7,12 +7,17 @@ export async function onRequestGet(context) {
   
   try {
     const url = new URL(request.url);
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 1000);
     const offset = parseInt(url.searchParams.get('offset') || '0');
     
     const results = await env.DB.prepare(
       'SELECT slug, title, author, date, tags, shader FROM poems WHERE published = 1 ORDER BY created_at DESC LIMIT ? OFFSET ?'
     ).bind(limit, offset).all();
+
+    const totalRow = await env.DB.prepare(
+      'SELECT COUNT(*) AS total FROM poems WHERE published = 1'
+    ).first();
+    const total = totalRow ? totalRow.total : 0;
     
     const poems = (results.results || []).map(p => {
       let tags = [];
@@ -33,7 +38,7 @@ export async function onRequestGet(context) {
       };
     });
     
-    return new Response(JSON.stringify({ poems }), {
+    return new Response(JSON.stringify({ poems, total }), {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
