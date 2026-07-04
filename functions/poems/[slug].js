@@ -131,11 +131,11 @@ function renderPoem(poem, tags, commentsCount, responsesCount) {
     <meta property="og:title" content="${escapeHtml(poem.title)} — Po3m">
     <meta property="og:description" content="${excerpt}">
     <meta property="og:type" content="article">
-    <meta property="og:url" content="https://po3m.com/poems/${poem.slug}">
+    <meta property="og:url" content="https://po3m.com/poem/${poem.slug}">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="${escapeHtml(poem.title)}">
     <meta name="twitter:description" content="${excerpt}">
-    <link rel="canonical" href="https://po3m.com/poems/${poem.slug}">
+    <link rel="canonical" href="https://po3m.com/poem/${poem.slug}">
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -144,7 +144,7 @@ function renderPoem(poem, tags, commentsCount, responsesCount) {
       "author": { "@type": "Person", "name": "${escapeHtml(poem.author)}" },
       "datePublished": "${poem.date}",
       "description": "${excerpt}",
-      "url": "https://po3m.com/poems/${poem.slug}"
+      "url": "https://po3m.com/poem/${poem.slug}"
     }
     </script>
     <style>

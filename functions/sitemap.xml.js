@@ -13,7 +13,7 @@ export async function onRequestGet(context) {
   ];
 
   const poemUrls = (result.results || []).map(poem => ({
-    loc: "https://po3m.com/poems/" + poem.slug,
+    loc: "https://po3m.com/poem/" + poem.slug,
     lastmod: poem.date,
     priority: "0.9",
     changefreq: "monthly",
