@@ -313,7 +313,7 @@
                 <h2>✦ Featured</h2>
             </div>
             <div class="poems-grid" style="margin-bottom: 0;">
-                <a href="/poems/3am" class="poem-card" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15);">
+                <a href="/poem/3am" class="poem-card" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15);">
                     <h2 style="font-size: 1.4rem;">
                         <span class="shader-indicator shader-aurora"></span>
                         3am
@@ -325,7 +325,7 @@
                         <span class="tag">freedom</span>
                     </div>
                 </a>
-                <a href="/poems/vessel" class="poem-card" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15);">
+                <a href="/poem/vessel" class="poem-card" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15);">
                     <h2 style="font-size: 1.4rem;">
                         <span class="shader-indicator shader-prism"></span>
                         Vessel
@@ -337,7 +337,7 @@
                         <span class="tag">ambition</span>
                     </div>
                 </a>
-                <a href="/poems/thoughts-become-days" class="poem-card" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15);">
+                <a href="/poem/thoughts-become-days" class="poem-card" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15);">
                     <h2 style="font-size: 1.4rem;">
                         <span class="shader-indicator shader-time"></span>
                         Thoughts Become Days
@@ -422,7 +422,7 @@
         function renderPoems(poems) {
             const grid = document.getElementById('poems');
             grid.innerHTML = poems.map(poem => `
-                <a href="/poems/${poem.slug}" class="poem-card">
+                <a href="/poem/${poem.slug}" class="poem-card">
                     <h2>
                         <span class="shader-indicator shader-${poem.shader || 'aurora'}"></span>
                         ${poem.title}
@@ -493,7 +493,7 @@
             const slug = item.dataset.slug;
             
             if (type === 'title' && slug) {
-                window.location.href = `/poems/${slug}`;
+                window.location.href = `/poem/${slug}`;
                 return;
             }
             
