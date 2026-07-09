@@ -12,7 +12,7 @@ class PoemNavigation {
     
     getCurrentSlug() {
         const path = window.location.pathname;
-        const match = path.match(/\/poems\/(.+)/);
+        const match = path.match(/\/poems?\/(.+)/);
         return match ? match[1] : null;
     }
     
