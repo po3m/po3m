@@ -66,7 +66,7 @@ class PoemNavigation {
         nav.innerHTML = `
             <div class="nav-item nav-prev">
                 ${prevPoem ? `
-                    <a href="/poems/${prevPoem.slug}" class="nav-link" title="${this.escapeHtml(prevPoem.title)}">
+                    <a href="/poem/${prevPoem.slug}" class="nav-link" title="${this.escapeHtml(prevPoem.title)}">
                         <span class="nav-arrow">←</span>
                         <span class="nav-text">Previous</span>
                     </a>
@@ -79,7 +79,7 @@ class PoemNavigation {
             
             <div class="nav-item nav-next">
                 ${nextPoem ? `
-                    <a href="/poems/${nextPoem.slug}" class="nav-link" title="${this.escapeHtml(nextPoem.title)}">
+                    <a href="/poem/${nextPoem.slug}" class="nav-link" title="${this.escapeHtml(nextPoem.title)}">
                         <span class="nav-text">Next</span>
                         <span class="nav-arrow">→</span>
                     </a>

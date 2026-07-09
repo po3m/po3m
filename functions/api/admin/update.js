@@ -85,7 +85,7 @@ export async function onRequestPost(context) {
     return jsonResponse({
       success: true,
       message: 'Poem updated',
-      url: `https://po3m.com/poems/${slug}`
+      url: `https://po3m.com/poem/${slug}`
     });
     
   } catch (err) {

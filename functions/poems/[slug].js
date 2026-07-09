@@ -398,7 +398,7 @@ function renderPasswordPage(title, slug) {
         function go(e) {
             e.preventDefault();
             const pw = document.getElementById('pw').value;
-            window.location.href = '/poems/${slug}?key=' + encodeURIComponent(pw);
+            window.location.href = '/poem/${slug}?key=' + encodeURIComponent(pw);
         }
     </script>
 </body>

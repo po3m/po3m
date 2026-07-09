@@ -62,7 +62,7 @@ export async function onRequestPost(context) {
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).bind(slug, body.title, author, body.poem, shader, tags, date).run();
     
-    const url = `https://po3m.com/poems/${slug}`;
+    const url = `https://po3m.com/poem/${slug}`;
     
     return jsonResponse({
       success: true,
@@ -118,7 +118,7 @@ export async function onRequestGet(context) {
     const poems = (results.results || []).map(p => ({
       ...p,
       tags: JSON.parse(p.tags || '[]'),
-      url: `https://po3m.com/poems/${p.slug}`
+      url: `https://po3m.com/poem/${p.slug}`
     }));
     
     return jsonResponse({

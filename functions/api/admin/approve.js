@@ -53,7 +53,7 @@ export async function onRequestPost(context) {
       'UPDATE pending_poems SET status = ? WHERE id = ?'
     ).bind('approved', id).run();
     
-    const url = `https://po3m.com/poems/${pending.slug}`;
+    const url = `https://po3m.com/poem/${pending.slug}`;
     
     return jsonResponse({
       success: true,

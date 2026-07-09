@@ -34,7 +34,7 @@ export async function onRequestGet(context) {
       return {
         ...p,
         tags: tags,
-        url: `https://po3m.com/poems/${p.slug}`
+        url: `https://po3m.com/poem/${p.slug}`
       };
     });
     
