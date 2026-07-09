@@ -363,7 +363,7 @@ function renderPoem(poem, tags, commentsCount, responsesCount) {
     </script>
     
     <!-- Po3m Navigation Enhancement -->
-    <script src="/static/poem-navigation.js"></script>
+    <script src="/static/poem-nav-v3.js"></script>
 </body>
 </html>`;
 }

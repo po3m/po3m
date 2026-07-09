@@ -17,14 +17,21 @@ class PoemNavigation {
     }
     
     async init() {
-        if (!this.currentSlug) return;
+        console.log('[PoemNav] init, currentSlug:', this.currentSlug);
+        if (!this.currentSlug) {
+            console.log('[PoemNav] No slug found, aborting');
+            return;
+        }
         
         try {
             await this.loadPoems();
+            console.log('[PoemNav] Loaded', this.poems.length, 'poems');
+            console.log('[PoemNav] Current index:', this.getCurrentIndex());
             this.createNavigation();
+            console.log('[PoemNav] Navigation created');
             this.setupKeyboardNavigation();
         } catch (error) {
-            console.log('Navigation init failed:', error);
+            console.log('[PoemNav] init failed:', error);
         }
     }
     
