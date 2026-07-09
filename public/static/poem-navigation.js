@@ -29,7 +29,7 @@ class PoemNavigation {
     }
     
     async loadPoems() {
-        const response = await fetch('/api/poems');
+        const response = await fetch('/api/poems?limit=200');
         const data = await response.json();
         this.poems = data.poems || [];
     }
@@ -197,9 +197,9 @@ class PoemNavigation {
             const nextPoem = this.getNextPoem();
             
             if (e.key === 'ArrowLeft' && prevPoem) {
-                window.location.href = `/poems/${prevPoem.slug}`;
+                window.location.href = `/poem/${prevPoem.slug}`;
             } else if (e.key === 'ArrowRight' && nextPoem) {
-                window.location.href = `/poems/${nextPoem.slug}`;
+                window.location.href = `/poem/${nextPoem.slug}`;
             } else if (e.key === 'Home' || (e.key === 'h' && !e.ctrlKey)) {
                 window.location.href = '/';
             }
